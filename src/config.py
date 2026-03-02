@@ -1,8 +1,10 @@
-
 import json
+import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -50,11 +52,11 @@ PDF_SOURCES: dict = config["pdf_sources"]
 
 
 def print_config() -> None:
-    print("Konfiguráció betöltve:")
-    print(f"LLM Provider: {LLM_PROVIDER}")
-    print(f"LLM Model:    {OLLAMA_MODEL if LLM_PROVIDER == 'ollama' else HF_MODEL}")
-    print(f"Embedding:    {EMBEDDING_MODEL}")
-    print(f"Chunk:        {CHUNK_SIZE} chars, {CHUNK_OVERLAP} overlap")
-    print(f"Top-K:        {TOP_K}")
-    print(f"PDF források: {len(PDF_SOURCES)} dokumentum")
-    print(f"HF Token:     {'van' if HF_API_TOKEN else 'nincs'}")
+    logger.info("Konfiguráció betöltve:")
+    logger.info("  LLM Provider: %s", LLM_PROVIDER)
+    logger.info("  LLM Model:    %s", OLLAMA_MODEL if LLM_PROVIDER == "ollama" else HF_MODEL)
+    logger.info("  Embedding:    %s", EMBEDDING_MODEL)
+    logger.info("  Chunk:        %s chars, %s overlap", CHUNK_SIZE, CHUNK_OVERLAP)
+    logger.info("  Top-K:        %s", TOP_K)
+    logger.info("  PDF források: %s dokumentum", len(PDF_SOURCES))
+    logger.info("  HF Token:     %s", "van" if HF_API_TOKEN else "nincs")

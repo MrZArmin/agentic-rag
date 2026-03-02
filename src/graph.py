@@ -1,8 +1,11 @@
+import logging
 import time
 from langgraph.graph import StateGraph, END, START
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from src.config import MAX_RETRIEVAL_RETRIES, MAX_GENERATION_RETRIES
+
+logger = logging.getLogger(__name__)
 from src.nodes import (
     AgentState, make_initial_state,
     route_question, make_retrieve_node, grade_documents,
@@ -60,21 +63,23 @@ def build_graph(retriever: VectorStoreRetriever) -> StateGraph:
 
 def run_agent(app, question: str, *, verbose: bool = True) -> dict:
     if verbose:
-        print(f"{'='*70}")
-        print(f"{question}")
-        print(f"{'='*70}")
+        logger.info("=" * 70)
+        logger.info("%s", question)
+        logger.info("=" * 70)
 
     result = app.invoke(make_initial_state(question))
 
     if verbose:
-        print(f"\n{'─'*70}")
-        print(f"VÁLASZ:\n{result.get('generation', '—')}")
-        print(f"{'─'*70}")
-        print(f"Route={result.get('route_decision')}, "
-              f"Retrieval×{result.get('retrieval_count', 0)}, "
-              f"Generate×{result.get('generation_count', 0)}, "
-              f"Docs={len(result.get('documents', []))}")
-        print(f"{'='*70}\n")
+        logger.info("─" * 70)
+        logger.info("VÁLASZ:\n%s", result.get("generation", "—"))
+        logger.info("─" * 70)
+        logger.info(
+            "Route=%s, Retrieval×%d, Generate×%d, Docs=%d",
+            result.get("route_decision"),
+            result.get("retrieval_count", 0),
+            result.get("generation_count", 0),
+            len(result.get("documents", [])),
+        )
 
     return result
 
@@ -86,7 +91,7 @@ def measure_latency(app, question: str, n_runs: int = 3) -> dict:
         run_agent(app, question, verbose=False)
         elapsed = time.time() - t0
         times.append(elapsed)
-        print(f"Run {i+1}: {elapsed:.2f}s")
+        logger.info("Run %d: %.2fs", i + 1, elapsed)
     return {
         "avg": sum(times) / len(times),
         "min": min(times),

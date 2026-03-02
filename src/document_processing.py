@@ -1,3 +1,4 @@
+import logging
 import re
 import requests
 import fitz  # PyMuPDF
@@ -11,6 +12,8 @@ from src.config import (
     PDF_SOURCES, DATA_DIR,
     CHUNK_SIZE, CHUNK_OVERLAP, MIN_PAGE_LENGTH, SEPARATORS,
 )
+
+logger = logging.getLogger(__name__)
 
 def download_pdfs(
     sources: dict | None = None,
@@ -27,10 +30,10 @@ def download_pdfs(
         file_paths[key] = filepath
 
         if filepath.exists():
-            print(f"{info['title']} már letöltve")
+            logger.info("%s már letöltve", info["title"])
             continue
 
-        print(f"{info['title']}...", end=" ")
+        logger.info("%s letöltése...", info["title"])
         try:
             resp = requests.get(
                 info["url"], timeout=30,
@@ -38,9 +41,9 @@ def download_pdfs(
             )
             resp.raise_for_status()
             filepath.write_bytes(resp.content)
-            print(f"OK ({len(resp.content) / 1024:.0f} KB)")
+            logger.info("%s OK (%.0f KB)", info["title"], len(resp.content) / 1024)
         except Exception as e:
-            print(f"Hiba: {e}")
+            logger.error("%s letöltési hiba: %s", info["title"], e)
             file_paths.pop(key, None)
 
     return file_paths
@@ -74,7 +77,7 @@ def extract_text_from_pdf(
             ))
         pdf.close()
     except Exception as e:
-        print(f"Hiba {filepath.name} feldolgozásakor: {e}")
+        logger.error("Hiba %s feldolgozásakor: %s", filepath.name, e)
 
     return docs
 
@@ -85,7 +88,7 @@ def load_all_documents(pdf_paths: dict[str, Path]) -> list[Document]:
         meta = PDF_SOURCES[key]
         page_docs = extract_text_from_pdf(filepath, key, meta)
         all_docs.extend(page_docs)
-        print(f"{meta['title']}: {len(page_docs)} oldal")
+        logger.info("%s: %d oldal", meta["title"], len(page_docs))
     return all_docs
 
 def chunk_documents(docs: list[Document]) -> list[Document]:
@@ -101,11 +104,11 @@ def chunk_documents(docs: list[Document]) -> list[Document]:
 
 def print_chunk_stats(chunks: list[Document]) -> None:
     lens = [len(c.page_content) for c in chunks]
-    print(f"Chunk-olás: {len(chunks)} chunk")
-    print(f"Átlag: {sum(lens)/len(lens):.0f}, Min: {min(lens)}, Max: {max(lens)}")
+    logger.info("Chunk-olás: %d chunk", len(chunks))
+    logger.info("Átlag: %.0f, Min: %d, Max: %d", sum(lens) / len(lens), min(lens), max(lens))
 
     counts = Counter(c.metadata["source"] for c in chunks)
-    print("Forrás szerint:")
+    logger.info("Forrás szerint:")
     for src, n in counts.most_common():
         title = PDF_SOURCES.get(src, {}).get("title", src)
-        print(f"{title}: {n}")
+        logger.info("  %s: %d", title, n)

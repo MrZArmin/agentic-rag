@@ -1,3 +1,4 @@
+import logging
 from langchain_core.language_models import BaseChatModel
 
 from src.config import (
@@ -5,6 +6,8 @@ from src.config import (
     HF_API_TOKEN, HF_MODEL,
     LLM_TEMP_PRECISE, LLM_TEMP_CREATIVE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_llm(temperature: float = 0.0) -> BaseChatModel:
@@ -48,7 +51,7 @@ def get_llm_creative() -> BaseChatModel:
 
 
 def test_llm() -> None:
-    print(f"LLM teszt ({LLM_PROVIDER})...")
+    logger.info("LLM teszt (%s)...", LLM_PROVIDER)
     resp = get_llm_precise().invoke("Say 'Hello, working!' and nothing else.")
     text = resp.content if hasattr(resp, "content") else str(resp)
-    print(f"Válasz: {text.strip()}")
+    logger.info("Válasz: %s", text.strip())

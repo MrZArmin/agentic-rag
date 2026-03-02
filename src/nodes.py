@@ -1,3 +1,4 @@
+import logging
 from typing import TypedDict, List
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
@@ -5,6 +6,8 @@ from langchain_core.output_parsers import StrOutputParser
 
 from src.config import GRADER_DOC_PREVIEW_CHARS
 from src.llm import get_llm_precise, get_llm_creative
+
+logger = logging.getLogger(__name__)
 
 
 class AgentState(TypedDict):
@@ -153,15 +156,15 @@ VALID_ROUTES = {"retrieve", "direct"}
 def route_question(state: AgentState) -> AgentState:
     try:
         raw = _get_chain("router").invoke({"question": state["question"]}).strip().lower()
-        print(f"Router raw output: '{raw}'")
+        logger.debug("Router raw output: '%s'", raw)
 
         first_word = raw.split()[0].strip(".,!?:;\"'") if raw.split() else ""
         decision = first_word if first_word in VALID_ROUTES else "retrieve"
     except Exception as e:
-        print(f"Router hiba, fallback to retrieve: {e}")
+        logger.warning("Router hiba, fallback to retrieve: %s", e)
         decision = "retrieve"
 
-    print(f"Router: {decision}")
+    logger.info("Router: %s", decision)
     return {**state, "route_decision": decision}
 
 
@@ -170,10 +173,10 @@ def make_retrieve_node(retriever):
         try:
             docs = retriever.invoke(state["question"])
         except Exception as e:
-            print(f"Retriever hiba: {e}")
+            logger.error("Retriever hiba: %s", e)
             docs = []
         count = state.get("retrieval_count", 0) + 1
-        print(f"Retriever: {len(docs)} doc (próba #{count})")
+        logger.info("Retriever: %d doc (próba #%d)", len(docs), count)
         return {**state, "documents": docs, "retrieval_count": count}
     return retrieve_documents
 
@@ -188,12 +191,12 @@ def grade_documents(state: AgentState) -> AgentState:
             }).strip().lower()
             keep = raw.split()[0].strip(".,!?:;\"'") == "relevant" if raw.split() else False
         except Exception as e:
-            print(f"Grader hiba doc [{i+1}]: {e}, megtartjuk")
+            logger.warning("Grader hiba doc [%d]: %s, megtartjuk", i + 1, e)
             keep = True
-        print(f"Doc [{i+1}]: {'relevant' if keep else 'filtered'}")
+        logger.debug("Doc [%d]: %s", i + 1, "relevant" if keep else "filtered")
         if keep:
             relevant.append(doc)
-    print(f"Grader: {len(relevant)}/{len(state['documents'])} releváns")
+    logger.info("Grader: %d/%d releváns", len(relevant), len(state["documents"]))
     return {**state, "documents": relevant}
 
 
@@ -201,9 +204,9 @@ def rewrite_query(state: AgentState) -> AgentState:
     try:
         rewritten = _get_chain("rewriter").invoke({"question": state["question"]}).strip()
     except Exception as e:
-        print(f"Rewriter hiba, eredeti kérdés marad: {e}")
+        logger.warning("Rewriter hiba, eredeti kérdés marad: %s", e)
         rewritten = state["question"]
-    print(f"Rewriter: '{state['question']}' → '{rewritten}'")
+    logger.info("Rewriter: '%s' → '%s'", state["question"], rewritten)
     return {**state, "question": rewritten}
 
 
@@ -221,9 +224,9 @@ def generate_response(state: AgentState) -> AgentState:
             "context": context, "question": state["question"],
         })
     except Exception as e:
-        print(f"Generator hiba: {e}")
+        logger.error("Generator hiba: %s", e)
         response = "Sajnálom, nem sikerült választ generálni. Kérlek próbáld újra."
-    print(f"Generator (#{gen_count}): {response[:150]}...")
+    logger.info("Generator (#%d): %s...", gen_count, response[:150])
     return {**state, "generation": response, "generation_count": gen_count}
 
 
@@ -231,9 +234,9 @@ def generate_direct_response(state: AgentState) -> AgentState:
     try:
         response = _get_chain("direct").invoke({"question": state["question"]})
     except Exception as e:
-        print(f"Direct generator hiba: {e}")
+        logger.error("Direct generator hiba: %s", e)
         response = "Sajnálom, nem sikerült választ generálni."
-    print(f"Direct: {response[:150]}...")
+    logger.info("Direct: %s...", response[:150])
     return {**state, "generation": response}
 
 
@@ -246,8 +249,8 @@ def check_hallucination(state: AgentState) -> AgentState:
         first_word = raw.split()[0].strip(".,!?:;\"'") if raw.split() else ""
         grounded = first_word == "grounded"
     except Exception as e:
-        print(f"Hallucination check hiba, feltételezzük grounded: {e}")
+        logger.warning("Hallucination check hiba, feltételezzük grounded: %s", e)
         grounded = True
     label = "grounded" if grounded else "not_grounded"
-    print(f"   Hallucination: {'OK' if grounded else 'NOT OK'} ({label})")
+    logger.info("Hallucination: %s (%s)", "OK" if grounded else "NOT OK", label)
     return {**state, "hallucination_check": label}
