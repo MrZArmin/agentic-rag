@@ -2,15 +2,15 @@
 
 ## Miről szól?
 
-Egy Corrective RAG chatbot, ami 5 arXiv PDF-ből tud válaszolni kérdésekre. A lényege, hogy nem csak simán retrieval + generálás van, hanem a rendszer menet közben dönt: releváns-e amit talált, kell-e újrafogalmazni a kérdést, megalapozott-e a válasz.
+Egy Corrective RAG chatbot, ami 5 arXiv PDF-ből válaszol a kérdésekre. A lényege, hogy nem csak simán retrieval + generálás van, hanem a rendszer menet közben dönt: releváns-e amit talált, kell-e újrafogalmazni a kérdést, megalapozott-e a válasz.
 
 A pipeline LangGraph-fal van megépítve.
 
-A router eldönti, hogy egyáltalán kell-e retrieval (üdvözlésre, off-topic kérdésre nem indul el a pipeline). A grader szűri a visszakapott dokumentumokat, ha egyik sem releváns, a query rewriter átfogalmazza a kérdést és újrapróbálja. A végén a hallucination check megnézi, hogy a válasz tényleg a dokumentumokból jön-e.
+A router eldönti, hogy szükséges-e a retrieval (egyszerű, nem releváns kérdésre nem indul el). A grader szűri a visszakapott dokumentumokat, ha egyik sem releváns, a query rewriter átfogalmazza a kérdést és újrapróbálja. A végén a hallucination check megnézi, hogy a válasz tényleg a dokumentumokból jön-e.
 
 ## Miért CRAG?
 
-A sima RAG-nak az a hibája, hogy vakon bízik a retrieval eredményében. Ha rossz dokumentumokat húz be, rossz választ generál, ezt a felhasználó nem is tudja. A Corrective RAG ([Yan et al., 2024](https://arxiv.org/abs/2401.15884)) pont ezt orvosolja: értékeli a retrieval minőségét, és ha kell, korrigál.
+A sima RAG-nak az a hibája, hogy vakon bízik a retrieval eredményében. Ha rossz dokumentumokat húz be, rossz választ generál, ezt a felhasználó nem is tudja. A Corrective RAG ([Yan et al., 2024](https://arxiv.org/abs/2401.15884)) ezt igyekszik orvosolni: értékeli a retrieval minőségét, és ha kell, javít.
 
 Ez volt a legegyszerűbb módja annak, hogy valódi agentic viselkedést mutassak, így a rendszer nem egy fix pipeline-on megy végig, hanem döntéseket hoz a saját outputja alapján.
 
