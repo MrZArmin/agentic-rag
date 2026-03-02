@@ -1,0 +1,60 @@
+{
+  "embedding": {
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "device": "cpu",
+    "normalize": true
+  },
+
+  "document_processing": {
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "min_page_length": 50,
+    "separators": ["\n\n", "\n", ". ", " ", ""]
+  },
+
+  "retrieval": {
+    "top_k": 4,
+    "search_type": "similarity"
+  },
+
+  "agent": {
+    "max_retrieval_retries": 2,
+    "max_generation_retries": 1,
+    "grader_doc_preview_chars": 500,
+    "llm_temperature_precise": 0.0,
+    "llm_temperature_creative": 0.3
+  },
+
+  "paths": {
+    "data_dir": "data/pdfs",
+    "chroma_dir": "data/chroma_db"
+  },
+
+  "pdf_sources": {
+    "attention_is_all_you_need": {
+      "url": "https://arxiv.org/pdf/1706.03762",
+      "title": "Attention Is All You Need (Vaswani et al., 2017)",
+      "description": "A Transformer architektúra eredeti paper-je"
+    },
+    "rag_original": {
+      "url": "https://arxiv.org/pdf/2005.11401",
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP (Lewis et al., 2020)",
+      "description": "Az eredeti RAG paper, amely a retrieval-augmented generation-t bevezette"
+    },
+    "chain_of_thought": {
+      "url": "https://arxiv.org/pdf/2201.11903",
+      "title": "Chain-of-Thought Prompting (Wei et al., 2022)",
+      "description": "Chain-of-thought reasoning LLM-ekben"
+    },
+    "corrective_rag": {
+      "url": "https://arxiv.org/pdf/2401.15884",
+      "title": "Corrective Retrieval Augmented Generation (Yan et al., 2024)",
+      "description": "CRAG – a mi architektúránk alapja"
+    },
+    "agentic_rag_survey": {
+      "url": "https://arxiv.org/pdf/2501.09136",
+      "title": "Agentic RAG: A Survey (Singh et al., 2025)",
+      "description": "Átfogó survey az Agentic RAG rendszerekről"
+    }
+  }
+}

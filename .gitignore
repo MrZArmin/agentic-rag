@@ -1,0 +1,17 @@
+.env
+
+data/pdfs/
+data/chroma_db/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
