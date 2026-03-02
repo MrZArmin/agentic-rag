@@ -42,7 +42,6 @@ GRADER_DOC_PREVIEW_CHARS: int = config["agent"]["grader_doc_preview_chars"]
 LLM_TEMP_PRECISE: float = config["agent"]["llm_temperature_precise"]
 LLM_TEMP_CREATIVE: float = config["agent"]["llm_temperature_creative"]
 
-# paths (base_dir-hez relatív, így CWD-független)
 DATA_DIR: Path = base_dir / config["paths"]["data_dir"]
 CHROMA_DIR: Path = base_dir / config["paths"]["chroma_dir"]
 

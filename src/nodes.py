@@ -238,9 +238,7 @@ def generate_direct_response(state: AgentState) -> AgentState:
 
 
 def check_hallucination(state: AgentState) -> AgentState:
-    doc_texts = "\n\n".join(
-        d.page_content[:GRADER_DOC_PREVIEW_CHARS] for d in state["documents"]
-    )
+    doc_texts = "\n\n".join(d.page_content for d in state["documents"])
     try:
         raw = _get_chain("hallucination").invoke({
             "documents": doc_texts, "generation": state["generation"],

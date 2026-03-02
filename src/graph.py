@@ -36,7 +36,7 @@ def build_graph(retriever: VectorStoreRetriever) -> StateGraph:
     def _hallucination_edge(state: AgentState) -> str:
         if state.get("hallucination_check") == "grounded":
             return "end"
-        if state.get("generation_count", 0) < MAX_GENERATION_RETRIES + 1:
+        if state.get("generation_count", 0) <= MAX_GENERATION_RETRIES:
             return "regenerate"
         return "end"
 
