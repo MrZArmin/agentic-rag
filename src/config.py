@@ -52,6 +52,7 @@ PDF_SOURCES: dict = config["pdf_sources"]
 
 
 def print_config() -> None:
+    """Log the active configuration."""
     logger.info("Konfiguráció betöltve:")
     logger.info("  LLM Provider: %s", LLM_PROVIDER)
     logger.info("  LLM Model:    %s", OLLAMA_MODEL if LLM_PROVIDER == "ollama" else HF_MODEL)

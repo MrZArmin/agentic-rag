@@ -1,5 +1,5 @@
 import logging
-from typing import TypedDict, List
+from typing import TypedDict
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class AgentState(TypedDict):
     question: str
     generation: str
-    documents: List[Document]
+    documents: list[Document]
     retrieval_count: int
     generation_count: int
     route_decision: str
@@ -21,6 +21,7 @@ class AgentState(TypedDict):
 
 
 def make_initial_state(question: str) -> AgentState:
+    """Create a blank agent state for a new question."""
     return AgentState(
         question=question,
         generation="",
@@ -154,6 +155,7 @@ VALID_ROUTES = {"retrieve", "direct"}
 
 
 def route_question(state: AgentState) -> AgentState:
+    """Classify question as 'retrieve' or 'direct' using the router LLM."""
     try:
         raw = _get_chain("router").invoke({"question": state["question"]}).strip().lower()
         logger.debug("Router raw output: '%s'", raw)
@@ -169,6 +171,7 @@ def route_question(state: AgentState) -> AgentState:
 
 
 def make_retrieve_node(retriever):
+    """Create a retrieval node bound to the given retriever."""
     def retrieve_documents(state: AgentState) -> AgentState:
         try:
             docs = retriever.invoke(state["question"])
@@ -182,6 +185,7 @@ def make_retrieve_node(retriever):
 
 
 def grade_documents(state: AgentState) -> AgentState:
+    """Filter retrieved documents by LLM-based relevance grading."""
     relevant = []
     for i, doc in enumerate(state["documents"]):
         preview = doc.page_content[:GRADER_DOC_PREVIEW_CHARS]
@@ -201,6 +205,7 @@ def grade_documents(state: AgentState) -> AgentState:
 
 
 def rewrite_query(state: AgentState) -> AgentState:
+    """Rewrite the question to improve retrieval results."""
     try:
         rewritten = _get_chain("rewriter").invoke({"question": state["question"]}).strip()
     except Exception as e:
@@ -211,6 +216,7 @@ def rewrite_query(state: AgentState) -> AgentState:
 
 
 def generate_response(state: AgentState) -> AgentState:
+    """Generate an answer from retrieved documents."""
     parts = []
     for doc in state["documents"]:
         src = doc.metadata.get("title", "?")
@@ -231,6 +237,7 @@ def generate_response(state: AgentState) -> AgentState:
 
 
 def generate_direct_response(state: AgentState) -> AgentState:
+    """Respond without retrieval (greetings, off-topic)."""
     try:
         response = _get_chain("direct").invoke({"question": state["question"]})
     except Exception as e:
@@ -241,6 +248,7 @@ def generate_direct_response(state: AgentState) -> AgentState:
 
 
 def check_hallucination(state: AgentState) -> AgentState:
+    """Check whether the generated answer is grounded in the documents."""
     doc_texts = "\n\n".join(d.page_content for d in state["documents"])
     try:
         raw = _get_chain("hallucination").invoke({

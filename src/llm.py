@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_llm(temperature: float = 0.0) -> BaseChatModel:
+    """Create an LLM instance based on the configured provider."""
     if LLM_PROVIDER == "ollama":
         from langchain_ollama import ChatOllama
         return ChatOllama(
@@ -37,6 +38,7 @@ _llm_creative: BaseChatModel | None = None
 
 
 def get_llm_precise() -> BaseChatModel:
+    """Return a cached LLM instance with temperature=0 for classification tasks."""
     global _llm_precise
     if _llm_precise is None:
         _llm_precise = get_llm(LLM_TEMP_PRECISE)
@@ -44,6 +46,7 @@ def get_llm_precise() -> BaseChatModel:
 
 
 def get_llm_creative() -> BaseChatModel:
+    """Return a cached LLM instance with higher temperature for generation."""
     global _llm_creative
     if _llm_creative is None:
         _llm_creative = get_llm(LLM_TEMP_CREATIVE)
@@ -51,6 +54,7 @@ def get_llm_creative() -> BaseChatModel:
 
 
 def test_llm() -> None:
+    """Quick connectivity check for the configured LLM."""
     logger.info("LLM teszt (%s)...", LLM_PROVIDER)
     resp = get_llm_precise().invoke("Say 'Hello, working!' and nothing else.")
     text = resp.content if hasattr(resp, "content") else str(resp)

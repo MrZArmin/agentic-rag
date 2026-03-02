@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_embedding_model() -> HuggingFaceEmbeddings:
+    """Load the HuggingFace embedding model."""
     logger.info("Embedding modell: %s...", EMBEDDING_MODEL)
     model = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL,
@@ -31,6 +32,7 @@ def create_vectorstore(
     *,
     force_rebuild: bool = True,
 ) -> Chroma:
+    """Build a ChromaDB vector store from document chunks."""
     if force_rebuild and CHROMA_DIR.exists():
         shutil.rmtree(CHROMA_DIR)
 
@@ -46,6 +48,7 @@ def create_vectorstore(
 
 
 def get_retriever(vectorstore: Chroma) -> VectorStoreRetriever:
+    """Create a retriever with configured search type and top-k."""
     return vectorstore.as_retriever(
         search_type=SEARCH_TYPE,
         search_kwargs={"k": TOP_K},
@@ -53,6 +56,7 @@ def get_retriever(vectorstore: Chroma) -> VectorStoreRetriever:
 
 
 def test_retriever(retriever: VectorStoreRetriever, queries: list[str]) -> None:
+    """Run test queries and log retrieved documents."""
     logger.info("Retrieval teszt:")
     for q in queries:
         results = retriever.invoke(q)

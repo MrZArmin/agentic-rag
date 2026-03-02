@@ -4,8 +4,6 @@ from langgraph.graph import StateGraph, END, START
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from src.config import MAX_RETRIEVAL_RETRIES, MAX_GENERATION_RETRIES
-
-logger = logging.getLogger(__name__)
 from src.nodes import (
     AgentState, make_initial_state,
     route_question, make_retrieve_node, grade_documents,
@@ -13,8 +11,11 @@ from src.nodes import (
     check_hallucination,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def build_graph(retriever: VectorStoreRetriever) -> StateGraph:
+    """Build and compile the Corrective RAG LangGraph state machine."""
     wf = StateGraph(AgentState)
 
     # Nodes
@@ -62,6 +63,7 @@ def build_graph(retriever: VectorStoreRetriever) -> StateGraph:
     return wf.compile()
 
 def run_agent(app, question: str, *, verbose: bool = True) -> dict:
+    """Run a single question through the agent pipeline."""
     if verbose:
         logger.info("=" * 70)
         logger.info("%s", question)
@@ -85,6 +87,7 @@ def run_agent(app, question: str, *, verbose: bool = True) -> dict:
 
 
 def measure_latency(app, question: str, n_runs: int = 3) -> dict:
+    """Measure average, min, and max latency over n_runs."""
     times = []
     for i in range(n_runs):
         t0 = time.time()

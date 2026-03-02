@@ -19,6 +19,7 @@ def download_pdfs(
     sources: dict | None = None,
     data_dir: Path | None = None,
 ) -> dict[str, Path]:
+    """Download PDFs from configured sources, skip already existing files."""
     sources = sources or PDF_SOURCES
     data_dir = data_dir or DATA_DIR
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -53,29 +54,29 @@ def extract_text_from_pdf(
     source_key: str,
     metadata: dict,
 ) -> list[Document]:
+    """Extract and clean text from a PDF, returning one Document per page."""
     docs: list[Document] = []
     try:
-        pdf = fitz.open(str(filepath))
-        for page_num in range(len(pdf)):
-            text = pdf[page_num].get_text("text")
+        with fitz.open(str(filepath)) as pdf:
+            for page_num in range(len(pdf)):
+                text = pdf[page_num].get_text("text")
 
-            text = re.sub(r"\n{3,}", "\n\n", text)
-            text = re.sub(r"[ \t]+", " ", text)
-            text = text.strip()
+                text = re.sub(r"\n{3,}", "\n\n", text)
+                text = re.sub(r"[ \t]+", " ", text)
+                text = text.strip()
 
-            if len(text) < MIN_PAGE_LENGTH:
-                continue
+                if len(text) < MIN_PAGE_LENGTH:
+                    continue
 
-            docs.append(Document(
-                page_content=text,
-                metadata={
-                    "source": source_key,
-                    "title": metadata.get("title", ""),
-                    "page": page_num + 1,
-                    "total_pages": len(pdf),
-                },
-            ))
-        pdf.close()
+                docs.append(Document(
+                    page_content=text,
+                    metadata={
+                        "source": source_key,
+                        "title": metadata.get("title", ""),
+                        "page": page_num + 1,
+                        "total_pages": len(pdf),
+                    },
+                ))
     except Exception as e:
         logger.error("Hiba %s feldolgozásakor: %s", filepath.name, e)
 
@@ -83,6 +84,7 @@ def extract_text_from_pdf(
 
 
 def load_all_documents(pdf_paths: dict[str, Path]) -> list[Document]:
+    """Load and extract text from all downloaded PDFs."""
     all_docs: list[Document] = []
     for key, filepath in pdf_paths.items():
         meta = PDF_SOURCES[key]
@@ -92,6 +94,7 @@ def load_all_documents(pdf_paths: dict[str, Path]) -> list[Document]:
     return all_docs
 
 def chunk_documents(docs: list[Document]) -> list[Document]:
+    """Split documents into chunks using RecursiveCharacterTextSplitter."""
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
@@ -103,6 +106,7 @@ def chunk_documents(docs: list[Document]) -> list[Document]:
 
 
 def print_chunk_stats(chunks: list[Document]) -> None:
+    """Log chunk count, size statistics, and per-source distribution."""
     lens = [len(c.page_content) for c in chunks]
     logger.info("Chunk-olás: %d chunk", len(chunks))
     logger.info("Átlag: %.0f, Min: %d, Max: %d", sum(lens) / len(lens), min(lens), max(lens))
